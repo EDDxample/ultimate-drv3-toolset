@@ -32,7 +32,7 @@ def read(dir):
             obj.seek(table_offset + i * 8, 0)
 
             text_id     = read_u32(obj); #print('text ID:', text_id)
-            text_offset = read_u32(obj); #print('text offset:', text_offset)
+            text_offset = read_u32(obj); #print('text offset:', text_offset, f'{text_offset:x}') # 4c4
 
             obj.seek(text_offset, 0)
             text = read_null_terminated_string(obj); #print(text_id, text)
@@ -52,14 +52,17 @@ def write(lines):
 
     index_table_bytesize = len(lines) * 4 * 2 # N x 2 x u32 numbers
     string_table = b''
+    string_set = {}
 
 
     for i, line in enumerate(lines):
         dataout += write_u32(i) # string ID
-        
-        dataout += write_u32(32 + index_table_bytesize + len(string_table)) # string offset
-
-        string_table += write_null_terminated_string(lines[i])
+        if line in string_set:
+            dataout += write_u32(string_set[line]) # string offset
+        else:
+            string_set[line] = 32 + index_table_bytesize + len(string_table)
+            dataout += write_u32(32 + index_table_bytesize + len(string_table)) # string offset
+            string_table += write_null_terminated_string(line)
 
     dataout += string_table
 
