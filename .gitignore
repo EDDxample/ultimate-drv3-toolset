@@ -1,0 +1,10 @@
+/input/*
+!/input/demo.stx
+
+/output/text/*
+/output/build/*
+!/output/text/demo.txt
+!/output/build/demo.stx
+
+*.pyc
+
