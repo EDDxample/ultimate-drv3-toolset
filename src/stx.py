@@ -36,7 +36,7 @@ def read(dir):
 
             obj.seek(text_offset, 0)
             text = read_null_terminated_string(obj); #print(text_id, text)
-            lines.append([text_id, text])
+            lines.append(text)
     return lines
 
 

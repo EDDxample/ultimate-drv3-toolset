@@ -12,3 +12,4 @@ Tools I'm using to translate the game to spanish
 ## TODO
 - fix formatting commands like <CLT = cltMIND>
 - fix font, missing áéíóú ñ
+- write tests stx -> txt -> stx
