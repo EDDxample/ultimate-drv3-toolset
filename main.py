@@ -1,8 +1,15 @@
 from src import stx, utils
+import sys
 
 def main():
-    # extract_stx('demo')
-    build_stx('demo')
+    if len(sys.argv) == 3:
+        mode, filename = sys.argv[1:3]
+        
+        if filename:
+            if mode in ['e', 'extract']:
+                extract_stx(filename)
+            elif mode in ['b', 'build']:
+                build_stx(filename)
 
 
 def extract_stx(filename):
