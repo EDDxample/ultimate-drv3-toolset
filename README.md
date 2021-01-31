@@ -14,6 +14,14 @@ Tools I'm using to translate the game to spanish
 > de repente, alguien me empujó a un coche.
 
 ## TODO
-- fix formatting commands like <CLT = cltMIND>
-- fix font, missing áéíóú ñ
+- fix font, missing áíóú ñ, é is there for some reason...
 - write tests stx -> txt -> stx
+- rephrase ~50 chars long comments to multi-line
+
+
+## Inspired by these tools
+[yukinogatari/Danganronpa-Tools](https://github.com/yukinogatari/Danganronpa-Tools)
+
+[jpmac26/DRV3-Tools](https://github.com/jpmac26/DRV3-Tools)
+
+[ThunderGemios10/The-Super-Duper-Script-Editor](https://github.com/ThunderGemios10/The-Super-Duper-Script-Editor)
