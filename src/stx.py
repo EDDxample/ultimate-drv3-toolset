@@ -56,6 +56,7 @@ def write(lines):
 
 
     for i, line in enumerate(lines):
+        line = adapt_to_font(line)
         dataout += write_u32(i) # string ID
         if line in string_set:
             dataout += write_u32(string_set[line]) # string offset
@@ -69,6 +70,7 @@ def write(lines):
     return dataout
     
 
-
-
+# same used by https://twitter.com/v3ducciones
+def adapt_to_font(line: str):
+    return line.replace('¡', '&').replace('¿', '$').replace('ñ', 'û').replace('á', 'à').replace('í', 'î').replace('ó', 'ô').replace('ú', 'ù')
     

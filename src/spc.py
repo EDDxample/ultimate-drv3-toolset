@@ -1,12 +1,13 @@
-from src.utils import read_string, read_null_terminated_string, read_u32, write_u32, write_null_terminated_string
+from src.utils import read_string, read_null_terminated_string, read_u32, read_u16, padding
+from src.utils import write_null_terminated_string, write_u32, read_u16
 
 # SPC Format:
 #    4B  utf-8 magic word = 'CPS.'
-#   36B  padding
+#   36B  x24  padding
 #   u32  file count
 #   u32  unknown
-#   16B  padding
-#    4B  UTF-8 table magic word = 'Root'
+#   16B  x10  padding
+#    4B  utf-8 table magic word = 'Root'
 #   12B  padding
 #   
 #   File Table:
@@ -22,26 +23,38 @@ from src.utils import read_string, read_null_terminated_string, read_u32, write_
 def read(dir):
     lines = []
     with open(dir, 'rb') as obj:
-        magic = read_string(obj, 4); #print(magic) # STXT
-        lang  = read_string(obj, 4); #print(lang)  # JPLL (JP and US)
+        magic = read_string(obj, 4); #print(magic) # CPS.
+        padding(obj, 36)
+        file_count = read_u32(obj)
+        idk0 = read_u32(obj)
+        padding(obj, 16)
+        table_magic = read_string(obj, 4)
+        padding(obj, 12)
 
-        idk0         = read_u32(obj); print(idk0)
-        table_offset = read_u32(obj); print('table offset:', table_offset)
-        idk2         = read_u32(obj); print(idk2)
-        table_len    = read_u32(obj); print('table length:', table_len)
+        for file_i in range(file_count):
+            compression_flag = read_u16(obj)
+            idk0 = read_u16(obj)
+            compressed_size = read_u32(obj)
+            decompressed_size = read_u32(obj)
+            name_length = read_u32(obj) + 1 # null terminated
+            padding(obj, 16)
 
-        print()
+            # alligned to 16B blocks
+            file_padding = (16 - compressed_size % 16) % 16
+            name_padding = (16 - name_length % 16) % 16
 
-        for i in range(table_len):
-            obj.seek(table_offset + i * 8, 0)
+            filename = read_string(obj, name_length - 1)
+            padding(obj, 1 + name_padding) # null terminated + padding
 
-            text_id     = read_u32(obj); #print('text ID:', text_id)
-            text_offset = read_u32(obj); #print('text offset:', text_offset, f'{text_offset:x}') # 4c4
+            file_data = decomp(obj.read(compressed_size))
+            padding(obj, file_padding) # null terminated + padding
+            print(filename)
 
-            obj.seek(text_offset, 0)
-            text = read_null_terminated_string(obj); #print(text_id, text)
-            lines.append(text)
-    return lines
+            with open('output/stx/' + filename, 'wb') as current_file:
+                current_file.write(file_data)
+
+
+
 
 
 def write(lines):
@@ -76,3 +89,56 @@ def write(lines):
 
 
     
+# IMPORTS ################################################################################
+
+# From: https://github.com/yukinogatari/Danganronpa-Tools
+
+def bit_reverse(b):
+  return (b * 0x0202020202 & 0x010884422010) % 1023
+
+
+# This is the compression scheme used for individual files in an spc archive.
+def decomp(data) -> bytes:
+  
+  data = bytearray(data)
+  res = bytearray()
+  
+  flag = 1
+  p = 0
+  
+  while p < len(data):
+    
+    # We use an 8-bit flag to determine whether something's raw data
+    # or if we pull from the buffer, going from most to least significant bit.
+    # Reverse the bit order to make it easier to work with.
+    if flag == 1:
+      flag = 0x100 | bit_reverse(data[p])
+      p += 1
+    
+    if p >= len(data):
+      break
+    
+    # Raw byte.
+    if flag & 1:
+      res.append(data[p])
+      p += 1
+    
+    # Read from the buffer.
+    # xxxxxxyy yyyyyyyy
+    # Count  -> x + 2
+    # Offset -> y (from the beginning of a 1024-byte sliding window)
+    else:
+      b = (data[p + 1] << 8) | data[p]
+      p += 2
+      
+      count  = (b >> 10) + 2
+      offset = b & 0b1111111111
+      
+      for i in range(count):
+        res.append(res[offset - 1024])
+    
+    flag >>= 1
+  
+  return res
+
+################################################################################

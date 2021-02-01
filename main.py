@@ -1,4 +1,4 @@
-from src import stx, utils
+from src import stx, spc, utils
 import sys
 
 def main():
@@ -10,7 +10,8 @@ def main():
                 extract_stx(filename)
             elif mode in ['b', 'build']:
                 build_stx(filename)
-
+    else:
+        spc.read('input/ch0/chap0_text_US.SPC')
 
 def extract_stx(filename):
     lines = stx.read(f'input/{filename}.stx')
