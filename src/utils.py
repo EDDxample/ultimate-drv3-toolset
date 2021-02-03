@@ -1,6 +1,7 @@
 import struct
 import os, errno
 from io import BufferedReader
+from googletrans import Translator
 
 def padding(data: BufferedReader, length):
     data.seek(length, 1)
@@ -44,3 +45,10 @@ def ensure_paths(filename):
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
+
+
+def translate(text):
+    translator = Translator()
+    translation = translator.translate(text, dest='es')
+
+    return translation.text

@@ -1,4 +1,6 @@
-from src.utils import read_string, read_null_terminated_string, read_u32, write_u32, write_null_terminated_string
+from src.utils import read_string, read_null_terminated_string, read_u32, read_u16, padding
+from src.utils import write_null_terminated_string, write_u32, write_u16
+from src.utils import translate
 
 # Format:
 #   4B   utf-8 magic word = 'STXT'
@@ -37,7 +39,10 @@ def read(dir):
             obj.seek(text_offset, 0)
             text = read_null_terminated_string(obj); #print(text_id, text)
             lines.append(text)
-    return lines
+    
+    translation = translate('\n\n'.join(lines))
+    print(len(lines), len(translation.split('\n\n')))
+    return lines, translation.split('\n\n')
 
 
 def write(lines):

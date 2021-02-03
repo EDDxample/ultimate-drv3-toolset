@@ -12,9 +12,11 @@ Tools I'm using to translate the game to spanish
 > Estaba caminando por mi ruta habitual a la escuela cuando
 
 > de repente, alguien me empujó a un coche.
+- for custom fonts, replace those characters you don't use and edit the altas, in this case áíóúñ¡¿ -> àîôùû&$
+
 
 ## TODO
-- fix font, missing áíóú ñ, é is there for some reason...
+- understand spc compression algorithm
 - write tests stx -> txt -> stx
 - rephrase ~50 chars long comments to multi-line
 
