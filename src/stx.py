@@ -20,13 +20,13 @@ from src.utils import translate
 def read(dir):
     lines = []
     with open(dir, 'rb') as obj:
-        magic = read_string(obj, 4); #print(magic) # STXT
-        lang  = read_string(obj, 4); #print(lang)  # JPLL (JP and US)
+        magic = read_string(obj, 4);  #print(magic) # STXT
+        lang  = read_string(obj, 4);  #print(lang)  # JPLL (JP and US)
 
-        idk0         = read_u32(obj); print(idk0)
-        table_offset = read_u32(obj); print('table offset:', table_offset)
-        idk2         = read_u32(obj); print(idk2)
-        table_len    = read_u32(obj); print('table length:', table_len)
+        idk0         = read_u32(obj); #print(idk0)
+        table_offset = read_u32(obj); #print('table offset:', table_offset)
+        idk2         = read_u32(obj); #print(idk2)
+        table_len    = read_u32(obj); #print('table length:', table_len)
 
         print()
 
@@ -40,9 +40,29 @@ def read(dir):
             text = read_null_terminated_string(obj); #print(text_id, text)
             lines.append(text)
     
-    translation = translate('\n\n'.join(lines))
-    print(len(lines), len(translation.split('\n\n')))
-    return lines, translation.split('\n\n')
+    joint_lines = '\n\n'.join(lines)
+    print('batches:', len(lines))
+    print('lines length:', len(joint_lines))
+    batch_count = len(joint_lines) // 4000 + 1
+    batch_size  = len(lines) // batch_count + 1
+
+    print('batch count:', batch_count)
+    print('batch size:', batch_size)
+
+    translation = ''
+
+    if batch_count == 1:
+        translation = translate(joint_lines)
+        return lines, translation.split('\n\n')
+        
+    else:
+        for i in range(batch_count):
+            batch_from = i * batch_size
+            batch_to   = min(batch_from + batch_size, len(lines))
+            print(f'batch from {batch_from} to {batch_to}')
+            batch = lines[batch_from:batch_to]
+            translation += translate('\n\n'.join(batch)) + '\n\n'
+        return lines, translation.split('\n\n')[:-1]
 
 
 def write(lines):

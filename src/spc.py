@@ -1,5 +1,6 @@
 from src.utils import read_string, read_null_terminated_string, read_u32, read_u16, padding
 from src.utils import write_null_terminated_string, write_u32, read_u16
+from src.utils import ensure_paths
 
 # SPC Format:
 #    4B  utf-8 magic word = 'CPS.'
@@ -20,9 +21,9 @@ from src.utils import write_null_terminated_string, write_u32, read_u16
 #   
 
 
-def read(dir):
+def extract(filename):
     lines = []
-    with open(dir, 'rb') as obj:
+    with open(f'files/0_spc/{filename}.spc', 'rb') as obj:
         magic = read_string(obj, 4); #print(magic) # CPS.
         padding(obj, 36)
         file_count = read_u32(obj)
@@ -43,14 +44,15 @@ def read(dir):
             file_padding = (16 - compressed_size % 16) % 16
             name_padding = (16 - name_length % 16) % 16
 
-            filename = read_string(obj, name_length - 1)
+            subfilename = read_string(obj, name_length - 1)
             padding(obj, 1 + name_padding) # null terminated + padding
 
             file_data = decomp(obj.read(compressed_size))
             padding(obj, file_padding) # null terminated + padding
-            print(filename)
+            print(subfilename)
 
-            with open('output/stx/' + filename, 'wb') as current_file:
+            ensure_paths(f'files/1_stx/{filename}/{subfilename}')
+            with open(f'files/1_stx/{filename}/{subfilename}', 'wb') as current_file:
                 current_file.write(file_data)
 
 

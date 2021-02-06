@@ -1,10 +1,9 @@
 /input/*
 !/input/demo.stx
 
-/output/text/*
-/output/build/*
-!/output/text/demo.txt
-!/output/build/demo.stx
+!/files/1_stx/demo/demo.stx
+!/files/2_json/demo/demo.json
+/files/*
 
 *.pyc
 
