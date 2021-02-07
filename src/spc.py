@@ -49,7 +49,7 @@ def extract(filename):
 
             file_data = decomp(obj.read(compressed_size))
             padding(obj, file_padding) # null terminated + padding
-            print(subfilename)
+            # print(subfilename)
 
             ensure_paths(f'files/1_stx/{filename}/{subfilename}')
             with open(f'files/1_stx/{filename}/{subfilename}', 'wb') as current_file:

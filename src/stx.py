@@ -28,8 +28,6 @@ def read(dir):
         idk2         = read_u32(obj); #print(idk2)
         table_len    = read_u32(obj); #print('table length:', table_len)
 
-        print()
-
         for i in range(table_len):
             obj.seek(table_offset + i * 8, 0)
 
