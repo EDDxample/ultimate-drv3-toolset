@@ -98,4 +98,7 @@ def write(lines):
 # same used by https://twitter.com/v3ducciones
 def adapt_to_font(line: str):
     return line.replace('¡', '&').replace('¿', '$').replace('ñ', 'û').replace('á', 'à').replace('í', 'î').replace('ó', 'ô').replace('ú', 'ù')
+
+def adapt_from_font(line: str):
+    return line.replace('&', '¡').replace('$', '¿').replace('û', 'ñ').replace('à', 'á').replace('î', 'í').replace('ô', 'ó').replace('ù', 'ú')
     
