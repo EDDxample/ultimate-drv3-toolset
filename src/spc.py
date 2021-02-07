@@ -1,5 +1,5 @@
 from src.utils import read_string, read_null_terminated_string, read_u32, read_u16, padding
-from src.utils import write_null_terminated_string, write_u32, read_u16
+from src.utils import write_null_terminated_string, write_u32, write_u16
 from src.utils import ensure_paths
 
 # SPC Format:
@@ -49,7 +49,14 @@ def extract(filename):
 
             file_data = decomp(obj.read(compressed_size))
             padding(obj, file_padding) # null terminated + padding
-            # print(subfilename)
+            print(subfilename)
+
+
+            recompressed_size = len(comp(file_data))
+            print('compressed size:', compressed_size)
+            print('decompressed size:', decompressed_size)
+            print('recompressed size:', recompressed_size, '(EDD)')
+            print()
 
             ensure_paths(f'files/1_stx/{filename}/{subfilename}')
             with open(f'files/1_stx/{filename}/{subfilename}', 'wb') as current_file:
@@ -155,9 +162,9 @@ def decomp(data) -> bytes:
 # If we did find a duplicate sequence, and it is adjacent to the readahead area,
 # see how many bytes of that sequence can be repeated until we encounter
 # a non-duplicate byte or reach the end of the readahead area.
-def comp(data) -> bytes:
-    raw_size = len(data)
-    compressed_data = bytearray(raw_size)
+def comp(data: bytes) -> bytes:
+    raw_data_size = len(data)
+    compressed_data = bytearray(raw_data_size)
     block = bytearray(16) # block to be analyzed
     pos = 0
     flag = 0
@@ -168,22 +175,56 @@ def comp(data) -> bytes:
     while True:
         # At the end of each 8-byte block (or the end of the uncompressed data),
         # append the flag and compressed block to the compressed data.
-        if current_flag_bit == 8 or pos >= raw_size:
+        if current_flag_bit == 8 or pos >= raw_data_size:
             flag = bit_reverse(flag)
             compressed_data.append(flag)
-            compressed_data.append(block)
+            compressed_data.extend(block)
             block.clear()
             flag = 0
             current_flag_bit = 0
         
-        if pos >= raw_size: break
+        if pos >= raw_data_size: break
 
-        lookahead_length  = min(raw_size - pos, 65) # hardcoded max length
-        lookahead = data[pos : lookahead_length]
+        lookahead_length  = min(raw_data_size - pos, 65) # read until min(pos + 65, data_length)
+        lookahead = data[pos : pos + lookahead_length]
         searchback_length = min(pos, 1024)
-        window = data[pos - searchback_length, searchback_length + lookahead_length - 1]
+        window = data[pos - searchback_length : pos + lookahead_length - 1]
         
+        # Find the largest matching sequence in the window (searchback).
+        match_index = -1
+        current_seq_length = 1
+        seq = bytearray(65)
+        seq.append(lookahead[0])
+        while current_seq_length <= lookahead_length:
+            last_match_index = match_index
 
+            if searchback_length < 1: break
+            match_index = window.rfind(seq, 0, searchback_length - 1)
+            
+            if match_index == -1: # if this is a new sequence
+                if current_seq_length > 1:
+                    current_seq_length -= 1
+                    seq.pop()
+                match_index = last_match_index
+                break
+            
+            if current_seq_length == lookahead_length: break
+            seq.append(lookahead[current_seq_length])
+            current_seq_length += 1
+        
+        if current_seq_length >= 2 and match_index != -1: # if there's a duplicate sequence
+            repeat_data = 0 # u16
+            repeat_data |= 1024 - searchback_length + match_index
+            repeat_data |= (current_seq_length - 2) << 10
+            block.append(write_u16(repeat_data))
+        else: # there's a new raw byte
+            flag |= 1 << current_flag_bit
+            block.extend(seq)
+        
+        current_flag_bit += 1
+        pos += current_seq_length
+
+    return compressed_data
 
 ################################################################################
 
