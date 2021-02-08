@@ -223,8 +223,7 @@ def comp(data: bytes) -> bytes:
             repeat_data |= ((seq_len - 2) << 10) & 0xFFFF
             block.extend(write_u16(repeat_data))
         else:
-            # The sequence is new
-            # add that byte and move on
+            # The sequence is new, add that byte and move on
             flag |= (1 << flag_bit)
             block.append(data[pos])
         
