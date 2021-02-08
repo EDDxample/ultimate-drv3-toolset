@@ -2,28 +2,18 @@
 
 Tools I'm using to translate the game to spanish
 
-## Notes so far
-- .stx files = script files, investigation and debate *should* be in there too, only alter those in /007/
-- ideal file structure:
-  - /input/ch0/0_000_000.stx
-  - /output/text/ch0/0_000_000.txt
-  - /output/packed/ch0/0_000_000.stx
-- this text clips, so about 50 chars is enough:
-> Estaba caminando por mi ruta habitual a la escuela cuando
-
-> de repente, alguien me empujó a un coche.
-- for custom fonts, replace those characters you don't use and edit the altas, in this case áíóúñ¡¿ -> àîôùû&$
-
-
-## TODO
-- understand spc compression algorithm
-- write tests stx -> txt -> stx
-- rephrase ~50 chars long comments to multi-line
-
+## Steps
+- Extract the .stx files (dialogues) from the .spc file
+- Convert (and translate) the .stx files into .json files
+- Merge all the .json files (and correct the translations)
+- Convert back the .json files to .stx
+- Pack everything back into a new .spc file
 
 ## Inspired by these tools
 [yukinogatari/Danganronpa-Tools](https://github.com/yukinogatari/Danganronpa-Tools)
 
 [jpmac26/DRV3-Tools](https://github.com/jpmac26/DRV3-Tools)
+
+[jpmac26/DRV3-Sharp](https://github.com/jpmac26/DRV3-Sharp)
 
 [ThunderGemios10/The-Super-Duper-Script-Editor](https://github.com/ThunderGemios10/The-Super-Duper-Script-Editor)
