@@ -151,170 +151,88 @@ def decomp(data) -> bytes:
     return res
 
 ################################################################################
+# C# version from https://github.com/jpmac26/DRV3-Sharp
 
-# CPP version from https://github.com/jpmac26/DRV3-Tools
+def comp(data: bytes) -> bytes: 
+    data_len = len(data)
+    out = bytearray() # compressed result container
 
-# First, read from the readahead area into the sequence one byte at a time.
-# Then, see if the sequence already exists in the previous 1023 bytes.
-# If it does, note its position. Once we encounter a sequence that
-# is not duplicated, take the last found duplicate and compress it.
-# If we haven't found any duplicate sequences, add the first byte as raw data.
-# If we did find a duplicate sequence, and it is adjacent to the readahead area,
-# see how many bytes of that sequence can be repeated until we encounter
-# a non-duplicate byte or reach the end of the readahead area.
-def comp(data: bytes) -> bytes:
-    raw_data_size = len(data)
-    compressed_data = bytearray(raw_data_size)
-    block = bytearray(16) # block to be analyzed
-    pos = 0
-    flag = 0
-    current_flag_bit = 0
-    
+    # keep trak of the current compression state
+    pos  = 0     # current reading position in uncompressed data
+    flag = 0     # describes which parts of the current block are compressed/uncompressed
+    flag_bit = 0
+    block = bytearray() # current block of data that finished being compressed
+
     # This repeats until we've stored the final compressed block,
     # after we reach the end of the uncompressed data.
     while True:
-        # At the end of each 8-byte block (or the end of the uncompressed data),
-        # append the flag and compressed block to the compressed data.
-        if current_flag_bit == 8 or pos >= raw_data_size:
-            flag = bit_reverse(flag)
-            compressed_data.append(flag)
-            compressed_data.extend(block)
-            block.clear()
+        # At the end of each compressed block (or the end of the uncompressed data),
+        # append the flag and block to the compressed data.
+        if flag_bit == 8 or pos >= data_len:
+            flag = bit_reverse(flag & 0xFF) & 0xFF
+            out.append(flag)
+            out.extend(block)
+
+            if pos >= data_len: break
+
+            # prep for next block
             flag = 0
-            current_flag_bit = 0
+            flag_bit = 0
+            block = bytearray()
         
-        if pos >= raw_data_size: break
+        # Keep track of the current sequence of data we're trying to compress
+        seq_len = 1
+        found_at = -1
+        searchback_len = min(pos, 1024)
 
-        lookahead_length  = min(raw_data_size - pos, 65) # read until min(pos + 65, data_length)
-        lookahead = data[pos : pos + lookahead_length]
-        searchback_length = min(pos, 1024)
-        window = data[pos - searchback_length : pos + lookahead_length - 1]
-        
-        # Find the largest matching sequence in the window (searchback).
-        match_index = -1
-        current_seq_length = 1
-        seq = bytearray(65)
-        seq.append(lookahead[0])
-        while current_seq_length <= lookahead_length:
-            last_match_index = match_index
+        # When we start this loop, we've just started 
+        # looking for a new sequence to compress
+        while seq_len <= 65:
+            # The sliding window is a slice into the uncompressed data that we search for duplicate instances of the sequence
+            # The readahead length MUST be at least one byte shorter than the current sequence length
+            readahead_len = min(seq_len - 1, data_len - pos)
+            window = data[pos - searchback_len : pos + readahead_len]
 
-            if searchback_length < 1: break
-            match_index = window.rfind(seq, 0, searchback_length - 1)
-            
-            if match_index == -1: # if this is a new sequence
-                if current_seq_length > 1:
-                    current_seq_length -= 1
-                    seq.pop()
-                match_index = last_match_index
+            # If we've reached the end of the file, don't try to compress any more data, just use what we've got
+            # NOTE: We do NOT need to backup/restore foundAt here because it hasn't been touched yet this iteration!
+            if pos + seq_len > data_len:
+                seq_len -= 1
                 break
-            
-            if current_seq_length == lookahead_length: break
-            seq.append(lookahead[current_seq_length])
-            current_seq_length += 1
-        
-        if current_seq_length >= 2 and match_index != -1: # if there's a duplicate sequence
-            repeat_data = 0 # u16
-            repeat_data |= 1024 - searchback_length + match_index
-            repeat_data |= (current_seq_length - 2) << 10
-            block.append(write_u16(repeat_data))
-        else: # there's a new raw byte
-            flag |= 1 << current_flag_bit
-            block.extend(seq)
-        
-        current_flag_bit += 1
-        pos += current_seq_length
 
-    return compressed_data
+            seq = data[pos : pos + seq_len]
+            last_found_at = found_at        # back up last found value
+            found_at = window.rfind(seq)
+
+            # If we fail to find a match, then try and restore the last match we found,
+            # which must be one size smaller than the current.
+            if found_at == -1:
+                found_at = last_found_at
+                seq_len -= 1
+                break
+
+            seq_len += 1 # increment here bc python
+
+        # If we exit the above loop due to seqLen exceeding 65 then we must decrement seqLen
+        if seq_len > 65: seq_len = 65
+
+        
+        if seq_len >= 2 and found_at != -1:
+            # The sequence was inside the previous window
+            repeat_data = 0
+            repeat_data |= (1024 - searchback_len + found_at) & 0xFFFF # first 10-12 bits
+            repeat_data |= ((seq_len - 2) << 10) & 0xFFFF
+            block.extend(write_u16(repeat_data))
+        else:
+            # The sequence is new
+            # add that byte and move on
+            flag |= (1 << flag_bit)
+            block.append(data[pos])
+        
+        # Increment the current read position by the size of
+        # whatever sequence we found (even if it's non-compressable)
+        pos += max(1, seq_len)
+        flag_bit += 1
+    
+    return out
 
 ################################################################################
-
-
-
-"""
-// First, read from the readahead area into the sequence one byte at a time.
-// Then, see if the sequence already exists in the previous 1023 bytes.
-// If it does, note its position. Once we encounter a sequence that
-// is not duplicated, take the last found duplicate and compress it.
-// If we haven't found any duplicate sequences, add the first byte as raw data.
-// If we did find a duplicate sequence, and it is adjacent to the readahead area,
-// see how many bytes of that sequence can be repeated until we encounter
-// a non-duplicate byte or reach the end of the readahead area.
-QByteArray spc_cmp(const QByteArray &dec_data) {
-    const int dec_size = dec_data.size();
-    QByteArray cmp_data;
-    cmp_data.reserve(dec_size);
-    QByteArray block;
-    block.reserve(16);
-    int pos = 0;
-    int flag = 0;
-    char cur_flag_bit = 0;
-
-    // This repeats until we've stored the final compressed block,
-    // after we reach the end of the uncompressed data.
-    while (true) {
-        // At the end of each 8-byte block (or the end of the uncompressed data),
-        // append the flag and compressed block to the compressed data.
-        if (cur_flag_bit == 8 || pos >= dec_size) {
-            flag = bit_reverse(flag);
-            cmp_data.append(flag);
-            cmp_data.append(block);
-            block.clear();
-            block.reserve(16);
-            flag = 0;
-            cur_flag_bit = 0;
-        }
-
-        if (pos >= dec_size) break;
-
-        const int lookahead_len = std::min(dec_size - pos, 65);
-        const QByteArray lookahead = dec_data.mid(pos, lookahead_len);
-        const int searchback_len = std::min(pos, 1024);
-        const QByteArray window = dec_data.mid(pos - searchback_len, searchback_len + (lookahead_len - 1));
-
-        // Find the largest matching sequence in the window.
-        int s = -1;
-        int l = 1;
-        QByteArray seq;
-        seq.reserve(65);
-        seq.append(lookahead.at(0));
-        for (l; l <= lookahead_len; ++l) {
-            const int last_s = s;
-            if (searchback_len < 1) break;
-
-            s = window.lastIndexOf(seq, searchback_len - 1);
-
-            if (s == -1) {
-                if (l > 1) {
-                    --l;
-                    seq.chop(1);
-                }
-                s = last_s;
-                break;
-            }
-
-            if (l == lookahead_len) break;
-            seq.append(lookahead.at(l));
-        }
-
-        // if (seq.size() >= 2)
-        if (l >= 2 && s != -1) {
-            // We found a duplicate sequence
-            ushort repeat_data = 0;
-            repeat_data |= 1024 - searchback_len + s;
-            repeat_data |= (l - 2) << 10;
-            block.append(num_to_bytes<ushort>(repeat_data));
-        } else {
-            // We found a new raw byte
-            flag |= (1 << cur_flag_bit);
-            block.append(seq);
-        }
-
-        ++cur_flag_bit;
-        // Seek forward to the end of the duplicated sequence,
-        // in case it continued into the lookahead buffer.
-        pos += l;
-    }
-
-    return cmp_data;
-}
-"""
