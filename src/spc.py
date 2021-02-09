@@ -25,6 +25,7 @@ def extract(filename):
     lines = []
     with open(f'files/0_spc/{filename}.spc', 'rb') as obj:
         magic = read_string(obj, 4); #print(magic) # CPS.
+        if magic != 'CPS.': print(f'{filename}\'s magic isn\'t CPS.', magic)
         padding(obj, 36)
         file_count = read_u32(obj)
         idk0 = read_u32(obj)
@@ -61,41 +62,41 @@ def extract(filename):
             ensure_paths(f'files/1_stx/{filename}/{subfilename}')
             with open(f'files/1_stx/{filename}/{subfilename}', 'wb') as current_file:
                 current_file.write(file_data)
-
-
-
-
-
-def write(lines):
-    dataout =  b'\x53\x54\x58\x54'   # STXT
-    dataout += b'\x4A\x50\x4C\x4C'   # JPLL
-    dataout += b'\x01\x00\x00\x00'   # unknown value: 1
-    dataout += b'\x20\x00\x00\x00'   # table offset: 32
-    dataout += b'\x08\x00\x00\x00'   # unknown value: 8
-    dataout += write_u32(len(lines)) # table length
-
-    dataout += b'\x00\x00\x00\x00\x00\x00\x00\x00' # filler to 32
-
-    index_table_bytesize = len(lines) * 4 * 2 # N x 2 x u32 numbers
-    string_table = b''
-    string_set = {}
-
-
-    for i, line in enumerate(lines):
-        dataout += write_u32(i) # string ID
-        if line in string_set:
-            dataout += write_u32(string_set[line]) # string offset
-        else:
-            string_set[line] = 32 + index_table_bytesize + len(string_table)
-            dataout += write_u32(32 + index_table_bytesize + len(string_table)) # string offset
-            string_table += write_null_terminated_string(line)
-
-    dataout += string_table
-
-    return dataout
     
 
+def write(filename, subfiles):
+    dataout =  bytes('CPS.', 'utf-8')
+    dataout += b'\x00' * 36 # padding
+    file_count = len(subfiles)
+    dataout += write_u32(file_count)
+    dataout += write_u32(0) # idk
+    dataout += b'\x00' * 16 # padding
+    dataout += bytes('Root', 'utf-8')
+    dataout += b'\x00' * 12 # padding
 
+    for subfilename in subfiles:
+        file_data = open(f'files/4_stx/{filename}/{subfilename}', 'rb').read()
+        dataout += b'\x02\x00\x01\x00' # compression flag + idk
+        comp_data = comp(file_data)
+        comp_len = len(comp_data)
+        raw_len = len(file_data)
+        name_len = len(subfilename)
+
+        dataout += write_u32(comp_len)
+        dataout += write_u32(raw_len)
+        dataout += write_u32(name_len)
+        dataout += b'\x00' * 16 # padding
+
+        file_padding = (16 - comp_len % 16) % 16
+        name_padding = (16 - name_len % 16) % 16
+
+        dataout += bytes(subfilename, 'utf-8')
+        dataout += b'\x00' * name_padding
+
+        dataout += comp_data
+        dataout += b'\x00' * file_padding
+    
+    return dataout
 
     
 # IMPORTS ################################################################################

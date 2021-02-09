@@ -71,7 +71,14 @@ def mega_json_to_stxs(filename):
 
 # step 5
 def stxs_to_spc(filename):
-    pass
+    print('merging .stx files...')
+    stx_path = f'files/4_stx/{filename}/'
+    subfiles = [ f for f in os.listdir(stx_path) if os.path.isfile(os.path.join(stx_path, f)) ]
+    data = spc.write(filename, subfiles)
+    utils.ensure_paths(f'files/5_spc/{filename}.spc')
+    with open(f'files/5_spc/{filename}.spc', 'wb') as spc_file:
+        spc_file.write(data)
+    print('done.')
 
 def main():
     if len(sys.argv) == 3:
