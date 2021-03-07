@@ -1,4 +1,4 @@
-from src import stx, spc, utils
+from src import stx, spc, srd, utils
 import sys, json, os
 
 # step 1
@@ -83,7 +83,9 @@ def stxs_to_spc(filename):
 def main():
     if len(sys.argv) == 3:
         step, filename = sys.argv[1:3]
-        step = int(step)
+        try:
+            step = int(step)
+        except: pass
 
         if   step == 1: spc_to_stxs(filename)
         elif step == 2: stxs_to_jsons(filename)
@@ -91,6 +93,9 @@ def main():
         elif step == 4: mega_json_to_stxs(filename)
         elif step == 5: stxs_to_spc(filename)
 
+        elif step == 'srd': srd.read(filename)
+
 
 if __name__ == '__main__':
     main()
+    

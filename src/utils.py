@@ -9,13 +9,20 @@ def padding(data: BufferedReader, length):
 def read_string(data: BufferedReader, length, encoding='utf-8'):
     return data.read(length).decode(encoding)
     
-def read_null_terminated_string(data: BufferedReader):
+def read_null_terminated_string(data: BufferedReader, encoding='utf-16'):
     string = bytes()
     while True:
-        char = data.read(2)
-        if char == b'\x00\x00' or not char:
-            return string.decode('utf-16')
-        else: string += char
+        if encoding == 'utf-16':
+            char = data.read(2)
+            if char == b'\x00\x00' or not char:
+                return string.decode(encoding)
+            else: string += char
+        else:
+            char = data.read(1)
+            if char == b'\x00' or not char:
+                return string.decode(encoding)
+            else: string += char
+            
 
 def read_u32(data: BufferedReader, bigendian=False):
     endianness = '>' if bigendian else '<'
@@ -24,6 +31,10 @@ def read_u32(data: BufferedReader, bigendian=False):
 def read_u16(data: BufferedReader, bigendian=False):
     endianness = '>' if bigendian else '<'
     return struct.unpack(endianness + 'H', data.read(2))[0]
+
+def read_ubyte(data: BufferedReader, bigendian=False):
+    endianness = '>' if bigendian else '<'
+    return struct.unpack(endianness + 'B', data.read(1))[0]
 
 def write_null_terminated_string(string: str) -> bytes:
     return string.encode('utf-16')[2:] + b'\x00\x00' # remove endianness mark 0xFFFE
@@ -35,6 +46,10 @@ def write_u32(n: int, bigendian=False) -> bytes:
 def write_u16(n: int, bigendian=False) -> bytes:
     endianness = '>' if bigendian else '<'
     return struct.pack(endianness + 'H', n)
+
+def write_ubyte(n: int, bigendian=False):
+    endianness = '>' if bigendian else '<'
+    return struct.pack(endianness + 'B', n)
 
 
 
