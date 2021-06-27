@@ -17,9 +17,9 @@ from src.utils import translate
 #     null-terminated utf-16 string at said offset
 
 
-def read(dir):
+def read(file):
     lines = []
-    with open(dir, 'rb') as obj:
+    with open(file, 'rb') as obj:
         magic = read_string(obj, 4);  #print(magic) # STXT
         lang  = read_string(obj, 4);  #print(lang)  # JPLL (JP and US)
 
@@ -39,13 +39,13 @@ def read(dir):
             lines.append(text)
     
     joint_lines = '\n\n'.join(lines)
-    print('batches:', len(lines))
-    print('lines length:', len(joint_lines))
+    # print('batches:', len(lines))
+    # print('lines length:', len(joint_lines))
     batch_count = len(joint_lines) // 4000 + 1
     batch_size  = len(lines) // batch_count + 1
 
-    print('batch count:', batch_count)
-    print('batch size:', batch_size)
+    # print('batch count:', batch_count)
+    # print('batch size:', batch_size)
 
     translation = ''
 
@@ -57,7 +57,7 @@ def read(dir):
         for i in range(batch_count):
             batch_from = i * batch_size
             batch_to   = min(batch_from + batch_size, len(lines))
-            print(f'batch from {batch_from} to {batch_to}')
+            # print(f'batch from {batch_from} to {batch_to}')
             batch = lines[batch_from:batch_to]
             translation += translate('\n\n'.join(batch)) + '\n\n'
         return lines, translation.split('\n\n')[:-1]
@@ -79,7 +79,7 @@ def write(lines):
 
 
     for i, line in enumerate(lines):
-        line = adapt_to_font(line)
+        # line = adapt_to_font(line)
         dataout += write_u32(i) # string ID
         if line in string_set:
             dataout += write_u32(string_set[line]) # string offset

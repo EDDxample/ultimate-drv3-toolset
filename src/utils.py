@@ -63,7 +63,12 @@ def ensure_paths(filename):
 
 
 def translate(text):
-    translator = Translator()
-    translation = translator.translate(text, dest='es')
+    return text
+    try:
+        translator = Translator()
+        translation = translator.translate(text, dest='es')
 
-    return translation.text
+        return translation.text
+    except:
+        print('translate failed!')
+        return text
