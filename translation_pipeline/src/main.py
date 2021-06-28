@@ -8,9 +8,9 @@ def spc_to_text(filename):
     merge_jsons(filename)   # step 3
 
 def text_to_spc(filename):
-    """Executes steps 4, and 5 to get the final SPC"""
-    # mega_json_to_stxs(filename) # step 4
-    # stxs_to_spc(filename)       # step 5
+    """Executes steps 4 and 5 to get the final SPC"""
+    mega_json_to_stxs(filename) # step 4
+    stxs_to_spc(filename)       # step 5
 
 # step 1
 def spc_to_stxs(filename):
@@ -61,38 +61,38 @@ def merge_jsons(filename):
         json.dump(out, file_json, indent=2, ensure_ascii=False)
     print('done.')
 
-# # step 4
-# def mega_json_to_stxs(filename):
-#     print(f'converting {filename}.json into .stx files...')
-#     with open(f'files/3_mega_json/{filename}.json', 'r', encoding='utf-16') as mj_file:
-#         mj = json.load(mj_file)
-#         translated_lines = 0
-#         total_lines = 0
-#         for key in mj:
-#             value = mj[key]
+# step 4
+def mega_json_to_stxs(filename):
+    print(f'converting {filename}.json into .stx files...')
+    with open(f'{utils.STEP_3_PATH}/{filename}.json', 'r', encoding='utf-16') as mj_file:
+        mj = json.load(mj_file)
+        translated_lines = 0
+        total_lines = 0
+        for key in mj:
+            value = mj[key]
             
-#             # stats
-#             line_count = len(value['text'])
-#             total_lines += line_count
-#             if value['translated']: translated_lines += line_count
+            # stats
+            line_count = len(value['text'])
+            total_lines += line_count
+            if value['translated']: translated_lines += line_count
 
-#             # stx convertion
-#             lines = list(map(lambda texts: texts['es'], value['text']))
-#             data = stx.write(lines)
-#             utils.ensure_paths(f'files/4_stx/{filename}/{key}.stx')
-#             with open(f'files/4_stx/{filename}/{key}.stx', 'wb') as outfile:
-#                 outfile.write(data)
+            # stx convertion
+            lines = list(map(lambda texts: texts['es'], value['text']))
+            data = stx.repack(lines)
+            utils.ensure_paths(f'{utils.STEP_4_PATH}/{filename}/{key}.stx')
+            with open(f'{utils.STEP_4_PATH}/{filename}/{key}.stx', 'wb') as outfile:
+                outfile.write(data)
 
-#         print(f'{filename}: {translated_lines} out of {total_lines} lines. {translated_lines / total_lines * 100:.2f}%')
-#     print('done.')
+        print(f'{filename}: {translated_lines} out of {total_lines} lines. {translated_lines / total_lines * 100:.2f}%')
+    print('done.')
 
-# # step 5
-# def stxs_to_spc(filename):
-#     print('merging .stx files...')
-#     stx_path = f'files/4_stx/{filename}/'
-#     subfiles = [ f for f in os.listdir(stx_path) if os.path.isfile(os.path.join(stx_path, f)) ]
-#     data = spc.write(filename, subfiles)
-#     utils.ensure_paths(f'files/5_spc/{filename}.spc')
-#     with open(f'files/5_spc/{filename}.spc', 'wb') as spc_file:
-#         spc_file.write(data)
-#     print('done.')
+# step 5
+def stxs_to_spc(filename):
+    print('merging .stx files...')
+    stx_path = f'{utils.STEP_4_PATH}/{filename}/'
+    subfiles = [ f for f in os.listdir(stx_path) if os.path.isfile(os.path.join(stx_path, f)) ]
+    data = spc.repack(filename, subfiles)
+    utils.ensure_paths(f'{utils.STEP_5_PATH}/{filename}.spc')
+    with open(f'{utils.STEP_5_PATH}/{filename}.spc', 'wb') as spc_file:
+        spc_file.write(data)
+    print('done.')

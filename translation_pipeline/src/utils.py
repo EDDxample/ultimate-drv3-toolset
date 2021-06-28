@@ -10,7 +10,7 @@ STEP_1_PATH = 'translation_pipeline/pipeline/1_extracted_STX'
 STEP_2_PATH = 'translation_pipeline/pipeline/2_extracted_dialogues'
 STEP_3_PATH = 'translation_pipeline/pipeline/3_merged_dialogues'
 STEP_4_PATH = 'translation_pipeline/pipeline/4_output_STX'
-STEP_5_PATH = 'translation_pipeline/pipeline/4_output_SPC'
+STEP_5_PATH = 'translation_pipeline/pipeline/5_output_SPC'
 
 def padding(data: BufferedReader, length: int):
     data.seek(length, 1)

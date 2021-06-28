@@ -15,11 +15,13 @@ from translation_pipeline.src.utils import read, write, ensure_paths, padding, t
 #     null-terminated utf-16 string at said offset
 
 
-def extract(file):
+def extract(filename):
     lines = []
-    with open(file, 'rb') as obj:
-        magic = read('string', obj, length=4);  #print(magic) # STXT
-        lang  = read('string', obj, length=4);  #print(lang)  # JPLL (JP and US)
+    with open(filename, 'rb') as obj:
+        magic = read('string', obj, length=4); # STXT
+        lang  = read('string', obj, length=4); # JPLL (JP and US)
+
+        assert magic == 'STXT' and lang == 'JPLL', f'{filename} isn\'t a valid STX. Found: {magic}, {lang}'
 
         idk0         = read('u4', obj); #print(idk0)
         table_offset = read('u4', obj); #print('table offset:', table_offset)

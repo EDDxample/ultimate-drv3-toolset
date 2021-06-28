@@ -26,7 +26,7 @@ def extract(filename):
     with open(f'{STEP_0_PATH}/{filename}.spc', 'rb') as obj:
         magic = read('string', obj, length=4); #print(magic) # CPS.
         
-        assert magic == 'CPS.', f'{filename}\'s magic isn\'t CPS. Found: {magic}'
+        assert magic == 'CPS.', f'{filename} isn\'t a valid CPS. Found: {magic}'
 
         padding(obj, 36)
         file_count  = read('u4', obj)

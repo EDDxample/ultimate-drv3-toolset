@@ -1,4 +1,4 @@
-from translation_pipeline.src.main import spc_to_text
+from translation_pipeline.src.main import spc_to_text, text_to_spc
 
 import sys
 
@@ -24,6 +24,7 @@ def patch_text(filename):
     Packs the texts in ./translation_pipeline/pipeline/3_merged_dialogues/
     into a .SPC
     """
+    text_to_spc(filename)
 
 if __name__ == '__main__':
     main()

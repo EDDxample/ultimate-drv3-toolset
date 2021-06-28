@@ -3,11 +3,11 @@
 *.stx
 *.json
 
-/input/*
-!/input/demo.stx
+# demo files
+!demo_US.spc
+!demo_US.json
+!translation_pipeline/pipeline/*/demo_US/*
 
-!/files/1_stx/demo/demo.stx
-!/files/2_json/demo/demo.json
 /files/*
 
 *.pyc
