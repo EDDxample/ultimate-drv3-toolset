@@ -1,8 +1,8 @@
-from translation_pipeline.src.main import spc_to_text, text_to_spc
+from translation_pipeline.src.main import extract_text, patch_text
 import sys
 
 # COMMANDS:
-# "py main.py transIN  demo_US" -> extracts texts into a json
+# "py main.py transIN  demo_US" -> extracts the texts into a json file
 # "py main.py transOUT demo_US" -> repacks the json into a SPC file
 
 def main():
@@ -13,21 +13,6 @@ def main():
         elif key == 'transOUT': patch_text(filename)
         elif key == 'srd': pass
 
-
-def extract_text(filename):
-    """
-    Extracts the text from the spc to
-    ./translation_pipeline/pipeline/3_merged_dialogues/
-    """
-    spc_to_text(filename)
-
-
-def patch_text(filename):
-    """
-    Packs the texts in ./translation_pipeline/pipeline/3_merged_dialogues/
-    into a .SPC
-    """
-    text_to_spc(filename)
 
 if __name__ == '__main__':
     main()

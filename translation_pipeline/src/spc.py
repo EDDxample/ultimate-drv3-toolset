@@ -5,8 +5,8 @@ from translation_pipeline.src.utils import STEP_0_PATH, STEP_1_PATH, STEP_4_PATH
 # SPC Format:
 #    4B  utf-8 magic word = 'CPS.'
 #   36B  x24  padding
-#   u32  file count
-#   u32  unknown
+#    u4  file count
+#    u4  unknown
 #   16B  x10  padding
 #    4B  utf-8 table magic word = 'Root'
 #   12B  padding
@@ -24,7 +24,7 @@ from translation_pipeline.src.utils import STEP_0_PATH, STEP_1_PATH, STEP_4_PATH
 
 def extract(filename):
     with open(f'{STEP_0_PATH}/{filename}.spc', 'rb') as obj:
-        magic = read('string', obj, length=4); #print(magic) # CPS.
+        magic = read('string', obj, length=4); # CPS.
         
         assert magic == 'CPS.', f'{filename} isn\'t a valid CPS. Found: {magic}'
 
@@ -51,7 +51,9 @@ def extract(filename):
             padding(obj, 1 + name_padding) # null terminated + padding
 
             file_data = decomp(obj.read(compressed_size))
-            padding(obj, file_padding) # null terminated + padding
+            padding(obj, file_padding)
+
+
             print(subfilename)
 
 
@@ -98,6 +100,8 @@ def repack(filename, subfiles):
         dataout += b'\x00' * file_padding
     
     return dataout
+
+
 
 # IMPORTS ################################################################################
 
