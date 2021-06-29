@@ -1,9 +1,10 @@
 *.spc
 *.SPC
 *.stx
+*.json
+
 *.srd
 *.srdv
-*.json
 
 # demo files
 !demo_US.spc
