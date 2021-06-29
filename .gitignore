@@ -8,6 +8,6 @@
 !demo_US.json
 !translation_pipeline/pipeline/*/demo_US/*
 
-/files/*
+!font_patcher/files/*
 
 *.pyc

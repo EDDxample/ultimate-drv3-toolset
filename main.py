@@ -1,3 +1,4 @@
+from font_patcher.src.main import test
 from translation_pipeline.src.main import extract_text, patch_text
 import sys
 
@@ -12,7 +13,8 @@ def main():
         if   key == 'transIN':  extract_text(filename)
         elif key == 'transOUT': patch_text(filename)
         elif key == 'srd': pass
-
+    else:
+        test()
 
 if __name__ == '__main__':
     main()
