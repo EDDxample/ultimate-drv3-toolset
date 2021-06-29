@@ -1,6 +1,8 @@
 *.spc
 *.SPC
 *.stx
+*.srd
+*.srdv
 *.json
 
 # demo files
