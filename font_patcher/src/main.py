@@ -357,9 +357,30 @@ from PIL import Image
 
 # extractSPCs()
 
+def create_base(filename: str, charset: str):
+    """Creates a base.stx starting from another gamefont"""
+    
+    file = open(f'font_patcher/pipeline/{filename}', 'rb')
+    data = file.read()
+    file.close()
+    
+    data = srd.write_charset(data, charset)
+
+    file = open(f'font_patcher/files/base.stx', 'wb')
+    file.write(data)
+    file.close()
+
+
 
 def test():
+    charset = u" !\"#$€%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū"
+    charset = ''.join(sorted(set(charset)))
+
+    create_base('v3_font01_8.srd', charset)
+
     with open('font_patcher/files/base.stx', 'rb') as base:
-        print('font used:', srd.get_fontname(base))
-        print('charset:', srd.get_charset(base))
-        print('charBBs:', srd.get_charBBs(base))
+        # print('font used:', srd.get_fontname(base))
+        # print('charset:', srd.get_charset(base))
+        # print('charBBs:', srd.get_charBBs(base))
+        # srd.write_charset(base.read(), charset)
+        pass

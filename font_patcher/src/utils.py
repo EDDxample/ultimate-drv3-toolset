@@ -95,7 +95,7 @@ def charOffset(flagListOffset: int, char: str):
     
     file_offset = flagListOffset + (ordinal >> 3)
     bit_pos = ordinal & 0b111
-    # print(char, ordinal, f'${file_offset:04x}', bit_pos)
+    
     return file_offset, bit_pos
 
 def ensure_paths(filename):

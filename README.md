@@ -5,12 +5,12 @@ Tools I'm using to translate the game to spanish
 🚧 Refactor in progress 🚧
 
 # Translation Pipeline
+
 - Extract the .stx files (dialogues) from the .spc file
 - Convert (and translate) the .stx files into .json files
 - Merge all the .json files (and correct the translations)
 - Convert back the .json files to .stx
 - Pack everything back into a new .spc file
-
 
 # Font Patcher
 
@@ -26,16 +26,13 @@ As I'm too lazy to refactor and generalize the code, let me just explain the pro
 
 ## Notes
 
-First of all, as my target font uses ~126 characters, I'm using `v3_font03` as base, which has 130 characters 
-so you just have to edit the tables and not the headers / content sizes*
+First of all, as my target font uses ~127 characters, I'm using `v3_font01_8` as base, which has 130 characters
+so you just have to edit the tables and not the headers / content sizes\*
 
 \* (As long as your highest character is not higher than the ones in your base font, otherwise there's a bit count in the first table you should update)
 
-
-
-
-
 # Inspired by these tools
+
 [yukinogatari/Danganronpa-Tools](https://github.com/yukinogatari/Danganronpa-Tools)
 
 [jpmac26/DRV3-Tools](https://github.com/jpmac26/DRV3-Tools)
