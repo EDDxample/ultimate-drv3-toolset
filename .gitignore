@@ -6,11 +6,16 @@
 *.srd
 *.srdv
 
-# demo files
+# translation demo files
 !demo_US.spc
 !demo_US.json
 !translation_pipeline/pipeline/*/demo_US/*
 
+
 !font_patcher/files/*
+font_patcher/fonts/*
+font_patcher/pipeline/*
 
 *.pyc
+
+!.gitkeep

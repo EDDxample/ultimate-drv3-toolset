@@ -1,4 +1,4 @@
-from font_patcher.src.utils import read, write, readBB, charOffset
+from font_patcher.src.utils import read, textureSizeToBytes, write, readBB, charOffset, writeBB
 from io import BufferedIOBase, BufferedReader, BytesIO
 
 # Format
@@ -72,7 +72,7 @@ def write_charset(data: bytearray, new_charset: str) -> bytearray:
     """Overwrites the first two tables from the srd"""
 
     data = bytearray(data)
-    iodata = BytesIO(data) 
+    iodata = BytesIO(data)
 
     # get table offsets
     iodata.seek(SPFT_OFFSET + 0x1C)
@@ -81,13 +81,9 @@ def write_charset(data: bytearray, new_charset: str) -> bytearray:
 
     # current charset + asserts
     current_charset = get_charset(iodata)
-
-    # Note:
-    #   These can be acomplished, but that would mean you have to edit
-    #   multiple offsets and data lengths accross the whole file... big nope
-    assert len(current_charset) >= len(new_charset), 'The new charset cannot have more chars than the current one'
-    assert current_charset[-1] >= new_charset[-1],   'The new char ordinals cannot be higher than the current ones' 
     
+    # current_charset >= new_charset
+    validate_charset(iodata, new_charset)
     
     # first table
     for i in range(len(new_charset)):
@@ -115,4 +111,34 @@ def write_charset(data: bytearray, new_charset: str) -> bytearray:
             data[SPFT_OFFSET + offset_t2 + offset] = i
     
     return data
+
+def write_texture_size(data: bytearray, width: int, height: int):
+    data = bytearray(data)
+    for i, byte in enumerate(textureSizeToBytes(width, height)):
+        data[TXR_OFFSET + 0x16 + i] = byte
+    return data
+
+def write_charBBs(data: bytearray, charBBs):
+    data = bytearray(data)
+
+    offset_t3 = read('u4', BytesIO(data[SPFT_OFFSET + 0x18 : SPFT_OFFSET + 0x18 + 4]))
     
+    for i, item in enumerate(charBBs):
+        bbx, bby, w, h = item[3] # BB data
+        left, right, top = 0, 0, 0
+        for ii, byte in enumerate(writeBB(bbx, bby, w, h, left, right, top)):
+            data[SPFT_OFFSET + offset_t3 + i * 8 + ii] = byte
+    return data
+
+def validate_charset(current_data: BufferedReader, new_charset: str):
+    """
+        The new charset cannot be longer than the one in the base file.
+        
+        This can be solved by using another base file with more chars or by
+        updating the data offsets and lengths that would be affected by increasing its size.
+
+        I'm too lazy to solve that right now. ✌️
+    """
+    current_charset = get_charset(current_data)
+    assert len(current_charset) >= len(new_charset), 'The new charset cannot have more chars than the current one'
+    assert current_charset[-1] >= new_charset[-1],   'The new char ordinals cannot be higher than the current ones' 

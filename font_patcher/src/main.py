@@ -1,4 +1,4 @@
-from font_patcher.src import srd, utils
+from font_patcher.src import srd, srdv, utils
 
 from io import BufferedReader, BytesIO
 import cv2,  os, re, numpy as np
@@ -363,24 +363,56 @@ def create_base(filename: str, charset: str):
     file = open(f'font_patcher/pipeline/{filename}', 'rb')
     data = file.read()
     file.close()
+
+    # update texture mode to ARGB
+    data[srd.TXR_OFFSET + 0x1C] = 0x01
     
+    # fill first 2 tables
     data = srd.write_charset(data, charset)
 
-    file = open(f'font_patcher/files/base.stx', 'wb')
+    file = open(f'font_patcher/files/base.srd', 'wb')
     file.write(data)
     file.close()
 
+def create_srd_from_font(fontname: str, charset: str):
+    """
+        Generates the game fonts using the given font and charset.
 
+        If the given font doesn't support any character from the charset,
+        it will generate a .png and a text file with the bounding boxes that 
+        can be edited to then execute fix_font()
+    """
+
+    assert os.path.isfile('font_patcher/files/base.srd'), 'Please generate the base.stx before executing this function'
+
+    file = open(f'font_patcher/files/base.srd', 'rb')
+    data = file.read()
+    file.close()
+
+    # generate textures and compute BBs
+    charBBs, texture_width, texture_height = srdv.genTextureAndBBs(data, fontname, charset)
+
+    # write texture size and 3rd table
+    data = srd.write_texture_size(data, texture_width, texture_height)
+    data = srd.write_charBBs(data, charBBs)
+
+    file = open(f'font_patcher/pipeline/{fontname}/{fontname}.srd', 'wb')
+    file.write(data)
+    file.close()
+
+def fix_font():
+    pass
 
 def test():
     charset = u" !\"#$€%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū"
     charset = ''.join(sorted(set(charset)))
 
-    create_base('v3_font01_8.srd', charset)
+    # create_base('v3_font01_8.srd', charset)
+    create_srd_from_font('FOT-NewCezanneProN-EB.otf', charset)
+    create_srd_from_font('FOT-HummingStd-D.otf', charset)
 
-    with open('font_patcher/files/base.stx', 'rb') as base:
-        # print('font used:', srd.get_fontname(base))
-        # print('charset:', srd.get_charset(base))
-        # print('charBBs:', srd.get_charBBs(base))
-        # srd.write_charset(base.read(), charset)
-        pass
+    # with open('font_patcher/files/base.srd', 'rb') as base:
+    #     print('font used:', srd.get_fontname(base))
+    #     print('charset:', srd.get_charset(base))
+    #     print('charBBs:', srd.get_charBBs(base))
+    #     srd.write_charset(base.read(), charset)
