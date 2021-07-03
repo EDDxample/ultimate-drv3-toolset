@@ -12,6 +12,16 @@ Tools I'm using to translate the game to spanish
 - Convert back the .json files to .stx
 - Pack everything back into a new .spc file
 
+## Instructions
+
+### Extract text:
+
+Put the chapter's .spc into `pipeline/0_input_SPC`, then run `py main.py transIN <file name>` to get a json file with the text in `pipeline/3_merged_texts`. You can replace the texts in the "es" section (as it was initialy meant for a spanish translation).
+
+### Repack text:
+
+Once you edit that json, run `py main.py transOUT <file name>` to get the patched SPC in `5_output_SPC`.
+
 # Font Patcher
 
 Fonts are split in 2 files: a .srd with character data (misnamed as .stx for some reason) and a .srdv with the glyph texture data.
@@ -26,10 +36,28 @@ As I'm too lazy to refactor and generalize the code, let me just explain the pro
 
 ## Notes
 
-First of all, as my target font uses ~127 characters, I'm using `v3_font01_8` as base, which has 130 characters
-so you just have to edit the tables and not the headers / content sizes\*
+The new charset cannot be longer than the one in the base file.
 
-\* (As long as your highest character is not higher than the ones in your base font, otherwise there's a bit count in the first table you should update)
+This can be solved by using another base file with more chars or by updating
+the data offsets and lengths that would be affected by increasing its size. (not implemented atm)
+
+## Instructions
+
+### Generate Base file:
+
+Put the .stx you want to copy (for example, I used `v3_font01_8.srd`) inside `font_patcher/pipeline`
+and edit the charset inside `main.py`, then run `py main.py fontBASE <file name>`.
+
+### Generate SRD from font:
+
+Put the font you want inside `font_patcher/fonts`, then run `py main.py fontGEN <font name>`.
+If the font contains all the characters from the charset, it should generate both .srd and .srdv files.
+Otherwise, you'll get an `[ERROR].png` and a `[BB].txt` so you will have to run the next command.
+
+### Patch missing font (not ported yet)
+
+Edit the `[ERROR].png` texture with the glyphs you want, and update their bounding boxes in the `[BB].txt` file.
+Then run `py main.py fontPATCH <file name>`
 
 # Inspired by these tools
 

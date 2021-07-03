@@ -400,19 +400,19 @@ def create_srd_from_font(fontname: str, charset: str):
     file.write(data)
     file.close()
 
-def fix_font():
-    pass
+def fix_font(filename):
+    print('not implemented yet')
 
-def test():
-    charset = u" !\"#$€%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū"
-    charset = ''.join(sorted(set(charset)))
+# def test():
+#     charset = u" !\"#$€%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū"
+#     charset = ''.join(sorted(set(charset)))
 
-    # create_base('v3_font01_8.srd', charset)
-    create_srd_from_font('FOT-NewCezanneProN-EB.otf', charset)
-    create_srd_from_font('FOT-HummingStd-D.otf', charset)
+#     create_base('v3_font01_8.srd', charset)
+#     create_srd_from_font('FOT-NewCezanneProN-EB.otf', charset)
+#     create_srd_from_font('FOT-HummingStd-D.otf', charset)
 
-    # with open('font_patcher/files/base.srd', 'rb') as base:
-    #     print('font used:', srd.get_fontname(base))
-    #     print('charset:', srd.get_charset(base))
-    #     print('charBBs:', srd.get_charBBs(base))
-    #     srd.write_charset(base.read(), charset)
+#     with open('font_patcher/files/base.srd', 'rb') as base:
+#         print('font used:', srd.get_fontname(base))
+#         print('charset:', srd.get_charset(base))
+#         print('charBBs:', srd.get_charBBs(base))
+#         srd.write_charset(base.read(), charset)
