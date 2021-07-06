@@ -21,9 +21,12 @@ def getCharBB(char: str, ttfont: TTFont, imgfont: ImageFont, error: bool = False
         Returns the character bounding box if found in the font,
         otherwise, it uses a fallback character.
     """
-
+    
+    # special check for '…' as it's not displayed as I want
+    if char == '…': char = '...'
+    
     dx, dy, w, h = imgfont.getbbox(char)
-    if not charInFont(char, ttfont):
+    if len(char) == 1 and not charInFont(char, ttfont):
         error = True
         print('missing char', char)
         mappings = {
@@ -47,6 +50,7 @@ def getCharBB(char: str, ttfont: TTFont, imgfont: ImageFont, error: bool = False
             'Ö':'O',
             'Ū':'Ü',
             'Ü':'U',
+            '　': ' ',
         }
         if char in mappings:
             char = mappings[char]

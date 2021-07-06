@@ -1,8 +1,137 @@
-from font_patcher.src import srd, srdv, utils
-
+from font_patcher.src import srd, srdv, spc, utils
 from io import BufferedReader, BytesIO
-import cv2,  os, re, numpy as np
+import cv2,  os, re, numpy as np, shutil
 from PIL import Image
+
+def create_base(filename: str, charset: str):
+    """Creates a base.stx starting from another gamefont"""
+    
+    file = open(f'font_patcher/pipeline/{filename}', 'rb')
+    data = bytearray(file.read())
+    file.close()
+
+    # update texture mode to ARGB
+    data[srd.TXR_OFFSET + 0x1C] = 0x01
+    
+    # fill first 2 tables
+    data = srd.write_charset(data, charset)
+
+    file = open(f'font_patcher/files/base.srd', 'wb')
+    file.write(data)
+    file.close()
+
+def create_srd_from_font(fontname: str, charset: str):
+    """
+        Generates the game fonts using the given font and charset.
+
+        If the given font doesn't support any character from the charset,
+        it will generate a .png and a text file with the bounding boxes that 
+        can be edited to then execute fix_font()
+    """
+
+    assert os.path.isfile('font_patcher/files/base.srd'), 'Please generate the base.stx before executing this function'
+
+    file = open(f'font_patcher/files/base.srd', 'rb')
+    data = file.read()
+    file.close()
+
+    # generate textures and compute BBs
+    charBBs, texture_width, texture_height = srdv.genTextureAndBBs(data, fontname, charset)
+
+    # write texture size and 3rd table
+    data = srd.write_texture_size(data, texture_width, texture_height)
+    data = srd.write_charBBs(data, charBBs)
+
+    file = open(f'font_patcher/pipeline/{fontname}/{fontname}.srd', 'wb')
+    file.write(data)
+    file.close()
+
+def fix_font(fontname):
+    for file in os.listdir(f'font_patcher/pipeline/{fontname}'):
+        if file.endswith('[FIX].png'):
+            
+            # update srd
+            with open(f'font_patcher/pipeline/{fontname}/{fontname} [BB].txt') as ff:
+                pass
+
+            # update srdv
+            pic = cv2.imread(f'font_patcher/pipeline/{fontname}/{file}', cv2.IMREAD_UNCHANGED)
+            with open(f'font_patcher/pipeline/{fontname}/{fontname}.srdv', 'wb') as ff:
+                for dy in range(pic.shape[0]):
+                    for dx in range(pic.shape[1]):
+                        r = pic[dy, dx][0]
+                        ff.write(bytes((r,r,r,r)))
+
+
+def testA():
+    """
+        Create base and attempt to translate all the fonts.
+        Generate [ERROR].png if charset is not covered by the font.
+        (Fix them and their bounding boxes inside [BB].txt before the next step)
+    """
+    
+    charset = u" !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū…　"
+    charset = ''.join(sorted(set(charset)))
+
+    create_base('v3_font01_8.srd', charset)
+
+    pattern = re.compile(r'(\w+)\s+->\s+([a-zA-Z-_.]+)')
+
+    with open('font_patcher/files/fontnames FR.txt') as ff:
+        for groups in pattern.findall(ff.read()):
+            create_srd_from_font(groups[1], charset)
+
+def testB():
+    """
+        Patch all the fonts that contain a [FIX].png,
+        then rename them by chapter and compile them back to SPC
+    """
+    
+    charset = u" !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū…　"
+    charset = ''.join(sorted(set(charset)))
+
+    pattern = re.compile(r'(\w+)\s+->\s+([a-zA-Z-_.]+)')
+
+    maps = []
+
+    with open('font_patcher/files/fontnames FR.txt') as ff:
+        print('\n=== Fixing Fonts ===\n')
+        for groups in pattern.findall(ff.read()):
+            maps.append(groups)
+            print(groups[1])
+            fix_font(groups[1])
+
+    utils.ensure_paths('font_patcher/pipeline/out/')
+    utils.ensure_paths('font_patcher/pipeline/temp/')
+
+    print('\n=== Packing SPCs ===\n')
+    for chaptername, fontname in maps:
+        spcname = chaptername.replace('FR', 'US')
+        chaptername = chaptername.replace('game', 'v3').replace('_FR', '')
+        print(spcname)
+        folder = f'font_patcher/pipeline/{fontname}'
+
+        shutil.copyfile(f'{folder}/{fontname}.srd',  f'font_patcher/pipeline/temp/{chaptername}.stx')
+        shutil.copyfile(f'{folder}/{fontname}.srdv', f'font_patcher/pipeline/temp/{chaptername}.srdv')
+
+        # copy font00 as it can't be compiled to spc
+        if chaptername == 'v3_font00':
+            shutil.copyfile(f'font_patcher/pipeline/temp/{chaptername}.stx',  f'font_patcher/pipeline/out/{chaptername}.stx')
+            shutil.copyfile(f'font_patcher/pipeline/temp/{chaptername}.srdv', f'font_patcher/pipeline/out/{chaptername}.srdv')
+        
+        # compile the rest of the files to spc
+        else:
+            data = spc.repack('font_patcher/pipeline/temp', [f'{chaptername}.stx', f'{chaptername}.srdv'])
+            
+            with open(f'font_patcher/pipeline/out/{spcname}.spc', 'wb') as ff:
+                ff.write(data)
+    
+    shutil.rmtree('font_patcher/pipeline/temp/')
+
+########################################################################
+# OLD STUFF BEFORE THE REFACTOR, I'LL LEAVE IT HERE FOR NOW
+########################################################################
+
 # from utils import charOffset, read, textureSizeToBytes, writeBB
 # from textureUtils import genBaseTexture, genNewTexture, genNewTexture2
 
@@ -356,63 +485,3 @@ from PIL import Image
 # patchFonts()
 
 # extractSPCs()
-
-def create_base(filename: str, charset: str):
-    """Creates a base.stx starting from another gamefont"""
-    
-    file = open(f'font_patcher/pipeline/{filename}', 'rb')
-    data = file.read()
-    file.close()
-
-    # update texture mode to ARGB
-    data[srd.TXR_OFFSET + 0x1C] = 0x01
-    
-    # fill first 2 tables
-    data = srd.write_charset(data, charset)
-
-    file = open(f'font_patcher/files/base.srd', 'wb')
-    file.write(data)
-    file.close()
-
-def create_srd_from_font(fontname: str, charset: str):
-    """
-        Generates the game fonts using the given font and charset.
-
-        If the given font doesn't support any character from the charset,
-        it will generate a .png and a text file with the bounding boxes that 
-        can be edited to then execute fix_font()
-    """
-
-    assert os.path.isfile('font_patcher/files/base.srd'), 'Please generate the base.stx before executing this function'
-
-    file = open(f'font_patcher/files/base.srd', 'rb')
-    data = file.read()
-    file.close()
-
-    # generate textures and compute BBs
-    charBBs, texture_width, texture_height = srdv.genTextureAndBBs(data, fontname, charset)
-
-    # write texture size and 3rd table
-    data = srd.write_texture_size(data, texture_width, texture_height)
-    data = srd.write_charBBs(data, charBBs)
-
-    file = open(f'font_patcher/pipeline/{fontname}/{fontname}.srd', 'wb')
-    file.write(data)
-    file.close()
-
-def fix_font(filename):
-    print('not implemented yet')
-
-# def test():
-#     charset = u" !\"#$€%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū"
-#     charset = ''.join(sorted(set(charset)))
-
-#     create_base('v3_font01_8.srd', charset)
-#     create_srd_from_font('FOT-NewCezanneProN-EB.otf', charset)
-#     create_srd_from_font('FOT-HummingStd-D.otf', charset)
-
-#     with open('font_patcher/files/base.srd', 'rb') as base:
-#         print('font used:', srd.get_fontname(base))
-#         print('charset:', srd.get_charset(base))
-#         print('charBBs:', srd.get_charBBs(base))
-#         srd.write_charset(base.read(), charset)
