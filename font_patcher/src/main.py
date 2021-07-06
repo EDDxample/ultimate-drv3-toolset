@@ -63,15 +63,12 @@ def fix_font(fontname):
                         ff.write(bytes((r,r,r,r)))
 
 
-def testA():
+def testA(charset: str):
     """
         Create base and attempt to translate all the fonts.
         Generate [ERROR].png if charset is not covered by the font.
         (Fix them and their bounding boxes inside [BB].txt before the next step)
     """
-    
-    charset = u" !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū…　"
-    charset = ''.join(sorted(set(charset)))
 
     create_base('v3_font01_8.srd', charset)
 
@@ -81,14 +78,11 @@ def testA():
         for groups in pattern.findall(ff.read()):
             create_srd_from_font(groups[1], charset)
 
-def testB():
+def testB(charset: str):
     """
         Patch all the fonts that contain a [FIX].png,
         then rename them by chapter and compile them back to SPC
     """
-    
-    charset = u" !\"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~¡ª«º»¿ÁÇÉÍÑÓÚÜáçéíñóúüĀāĒēĪīŌōŪū…　"
-    charset = ''.join(sorted(set(charset)))
 
     pattern = re.compile(r'(\w+)\s+->\s+([a-zA-Z-_.]+)')
 
