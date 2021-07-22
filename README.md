@@ -2,8 +2,6 @@
 
 Tools I'm using to translate the game to spanish
 
-🚧 Refactor in progress 🚧
-
 # Translation Pipeline
 
 - Extract the .stx files (dialogues) from the .spc file
@@ -56,8 +54,15 @@ Otherwise, you'll get an `[ERROR].png` and a `[BB].txt` so you will have to run 
 
 ### Patch missing font (not ported yet)
 
-Edit the `[ERROR].png` texture with the glyphs you want, and update their bounding boxes in the `[BB].txt` file.
+Edit the `[ERROR].png` texture with the glyphs you want and rename it to `[FIX].png`,also update their bounding boxes in the `[BB].txt` file.
 Then run `py main.py fontPATCH <file name>`
+
+## Bulk commands
+
+I added some experimental commands to generate .srd's for all the fonts used in the game, you can find them in `/font_patcher/files/fontnames FR.txt`.
+- `py main.py fontsA` generates the SRD for all of them.
+- `py main.py fontsB` patches and packs everything back into .SPC files. 
+(NOTE: the output .SPC's crashed my game, but manually inserting the .stx and .srdv into the existing .SPC's worked, so my .spc repack sucks :P)
 
 # Inspired by these tools
 
@@ -68,3 +73,5 @@ Then run `py main.py fontPATCH <file name>`
 [jpmac26/DRV3-Sharp](https://github.com/jpmac26/DRV3-Sharp)
 
 [ThunderGemios10/The-Super-Duper-Script-Editor](https://github.com/ThunderGemios10/The-Super-Duper-Script-Editor)
+
+Special thanks to [yukinogatari](https://github.com/yukinogatari) and [CaptainSwag](https://github.com/jpmac26) for discovering, sharing and documenting the different file formats
